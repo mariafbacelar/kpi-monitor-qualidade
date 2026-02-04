@@ -1,0 +1,526 @@
+{
+  "name": "Monitor de KPIs de Qualidade",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        240
+      ],
+      "id": "d34931e2-f67b-4735-82d2-0be48991927c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XSltVIztEZCwRv4f",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1LdpzFBN6JJrw_I6QZA08w7PglZRUo0mmkLFv3vDzk5o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1592511189,
+          "mode": "list",
+          "cachedResultName": "Respostas ao formulário 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LdpzFBN6JJrw_I6QZA08w7PglZRUo0mmkLFv3vDzk5o/edit#gid=1592511189"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        80
+      ],
+      "id": "66c58505-5ee3-4aa3-873f-f2bcde57b25d",
+      "name": " Gatilho de disparo",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "fHWErkyuTy7loq4E",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://phellogenetic-kyla-cleistogamic.ngrok-free.dev/calcular-kpis",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"total_produzido\": {{ $json['Total Produzido  '] }},\n  \"defeitos\":{{ $json['Quantidade de Defeitos  '] }} ,\n  \"retrabalho\":{{ $json['Quantidade de Retrabalho  '] }} \n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        608,
+        0
+      ],
+      "id": "25272493-bfc7-49e3-957b-dc131bd8b0d2",
+      "name": "Requisição HTTP"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você é um Engenheiro Sênior de Qualidade em uma fabrica. Seu objetivo é analisar os dados de produção, explicar o problema de forma didática para o operador e sugerir ações corretivas.\n\nDADOS DA ANÁLISE:\n- Data da Produção: {{ $('Recebe um item por vez').item.json.Data }}\n- Horário da Análise (Agora): {{ $now.setZone('America/Sao_Paulo').format('dd/MM/yyyy HH:mm') }}\n- Total Produzido:{{ $('Recebe um item por vez').item.json['Total Produzido  '] }}  itens\n- Taxa de Defeitos: {{ $json.taxa_defeitos }}% (Meta aceitável: < 3%)\n- Taxa de Retrabalho: {{ $json.taxa_retrabalho }}% (Meta aceitável: < 2%)\n\nTAREFA:\nGere o corpo de um e-mail em formato HTML (sem tags de markdown ```html, apenas o código cru) para a equipe.\n\nDIRETRIZES DO CONTEÚDO:\n1. Saudação amigável.\n2. Destaque os valores críticos em vermelho ou negrito.\n3. Explique didaticamente o impacto (ex: desperdício de material, gargalo na linha).\n4. Liste 3 sugestões técnicas práticas em tópicos (<ul>) para injeção plástica (ex: verificar temperatura, pressão, molde).\n5. Adicione um rodapé pequeno dizendo: \"Relatório gerado automaticamente em: [Data e Hora da Análise]\".\n\nESTRUTURA ESPERADA DO HTML:\nUse tags <h2> para título, <p> para parágrafos, <b> para destaque, <ul> e <li> para as sugestões. Não use CSS complexo, apenas estilos inline simples se necessário.\n\n<br>\n<p>\n  📊 <b>Para análise detalhada e tendências, acesse o Painel de Controle:</b><br>\n  <a href=\"https://lookerstudio.google.com/reporting/c027e070-015a-451b-ba50-72e076d88faf\">Abrir Dashboard de Qualidade </a>\n</p>",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1056,
+        16
+      ],
+      "id": "89d388e3-c380-4645-b330-a810af9c561a",
+      "name": "Tratamento e geração de texto"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LdpzFBN6JJrw_I6QZA08w7PglZRUo0mmkLFv3vDzk5o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 847143040,
+          "mode": "list",
+          "cachedResultName": "historico_kpis",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LdpzFBN6JJrw_I6QZA08w7PglZRUo0mmkLFv3vDzk5o/edit#gid=847143040"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "total": "={{ $('Recebe um item por vez').item.json['Total Produzido  '] }}",
+            "defeitos": "={{ $('Recebe um item por vez').item.json['Quantidade de Defeitos  '] }}",
+            "retrabalho": "={{ $('Recebe um item por vez').item.json['Quantidade de Retrabalho  '] }}",
+            "taxa_defeitos": "={{ $json.taxa_defeitos }}",
+            "taxa_retrabalho": "={{ $json.taxa_retrabalho }}",
+            "conformidade": "={{ $json.conformidade }}",
+            "alerta": "={{ $json.alerta }}",
+            "data": "={{ $today.format('dd/MM/yyyy') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "defeitos",
+              "displayName": "defeitos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "retrabalho",
+              "displayName": "retrabalho",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "taxa_defeitos",
+              "displayName": "taxa_defeitos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "taxa_retrabalho",
+              "displayName": "taxa_retrabalho",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conformidade",
+              "displayName": "conformidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alerta",
+              "displayName": "alerta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        0
+      ],
+      "id": "dc892b99-bac1-41dd-86ce-4316524fe726",
+      "name": "Mapeia e preenche campos",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZV9hXF3W9kAu9GkP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "01fea35f-b030-4fa9-8ba8-44a3a907404a",
+              "leftValue": "={{ $json.alerta }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        192
+      ],
+      "id": "fce9522f-9bf8-4cba-9774-580f02a50f5f",
+      "name": "Condicional"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        384,
+        80
+      ],
+      "id": "8afbcc9e-1e13-4ed7-9d86-65769c94426c",
+      "name": "Recebe um item por vez"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1LdpzFBN6JJrw_I6QZA08w7PglZRUo0mmkLFv3vDzk5o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "producao_diaria",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LdpzFBN6JJrw_I6QZA08w7PglZRUo0mmkLFv3vDzk5o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status_Analise": "✅ OK"
+          },
+          "matchingColumns": [
+            "Status_Analise"
+          ],
+          "schema": [
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "total_produzido",
+              "displayName": "total_produzido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "defeitos",
+              "displayName": "defeitos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "retrabalho",
+              "displayName": "retrabalho",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status_Analise",
+              "displayName": "Status_Analise",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contexto: Uma empresa que opera 24h por dia antes anotava a produção em um folha de apontamento o projeto busca uma um monitoramento em tempo real que acompanha o tempo de operação.",
+              "displayName": "Contexto: Uma empresa que opera 24h por dia antes anotava a produção em um folha de apontamento o projeto busca uma um monitoramento em tempo real que acompanha o tempo de operação.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        416
+      ],
+      "id": "c5f6b2dd-c0d5-4070-9868-dbb6155418b3",
+      "name": "Mapeia e preenche",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZV9hXF3W9kAu9GkP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "bacelar.mafesilva@gmail.com",
+        "subject": "=Alerta de Qualidade! -  {{ $('Recebe um item por vez').item.json.Data }}",
+        "message": "={{ $json.text }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        128
+      ],
+      "id": "920f6fea-328e-44a9-960d-aeabccf0fb28",
+      "name": "Dispara alerta via e-mail",
+      "webhookId": "b159088c-583d-4ac8-af6a-f8a659120a8f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ZxK3bGHgi8bautE3",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Tratamento e geração de texto",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Gatilho de disparo": {
+      "main": [
+        [
+          {
+            "node": "Recebe um item por vez",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requisição HTTP": {
+      "main": [
+        [
+          {
+            "node": "Condicional",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mapeia e preenche campos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tratamento e geração de texto": {
+      "main": [
+        [
+          {
+            "node": "Dispara alerta via e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapeia e preenche campos": {
+      "main": [
+        [
+          {
+            "node": "Recebe um item por vez",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Condicional": {
+      "main": [
+        [
+          {
+            "node": "Tratamento e geração de texto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mapeia e preenche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recebe um item por vez": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Requisição HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispara alerta via e-mail": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "9ed7cb95-29b6-4455-b1c2-3bd6074bf36f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c75a5621dccbf0a508f46fb54eff5d003b412b8b638058a713d37893521a46ec"
+  },
+  "id": "jSdA0Xc9QuYA9WN0tGt42",
+  "tags": [
+    {
+      "updatedAt": "2026-02-01T23:53:10.436Z",
+      "createdAt": "2026-02-01T23:53:10.436Z",
+      "id": "ipWfQAN63RNPvUEx",
+      "name": "mafe"
+    },
+    {
+      "updatedAt": "2026-01-30T18:12:13.258Z",
+      "createdAt": "2026-01-30T18:12:13.258Z",
+      "id": "xV592V0oIOE5maa7",
+      "name": "dev"
+    }
+  ]
+}
